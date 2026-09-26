@@ -1,0 +1,198 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banking Management System</title>
+<style>
+*{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
+body{background:#eef2f7;color:#222}.hide{display:none}
+.login{height:100vh;display:flex;align-items:center;justify-content:center;background:#123c69}
+.box,.card{background:white;padding:22px;border-radius:12px;box-shadow:0 4px 15px #0002;margin:15px}
+.login .box{width:350px}
+h1,h2{color:#123c69;margin-bottom:15px}
+input,select{width:100%;padding:11px;margin:6px 0 12px;border:1px solid #ccc;border-radius:7px}
+button{padding:10px 15px;border:0;border-radius:7px;cursor:pointer;margin:3px}
+.primary{background:#1261a0;color:white}.green{background:#159447;color:white}
+.red{background:#dc2626;color:white}.orange{background:#ea7b00;color:white}
+header{background:#123c69;color:white;padding:18px;display:flex;justify-content:space-between}
+header h1{color:white}nav{background:#092c4c;padding:10px;text-align:center}
+nav button{background:white;color:#123c69}
+.container{max-width:1100px;margin:auto}.section{display:none}.active{display:block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.stat{padding:20px;border-radius:10px;color:white}.blue{background:#2563eb}
+.greenbg{background:#16a34a}.orangebg{background:#ea580c}.redbg{background:#dc2626}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:15px}
+table{width:100%;border-collapse:collapse;margin-top:15px}
+th,td{padding:10px;border-bottom:1px solid #ddd;text-align:left}
+th{background:#e5effa}.table{overflow:auto}
+.dark{background:#111827;color:white}.dark .card{background:#1f2937}
+.dark input,.dark select{background:#374151;color:white}
+@media(max-width:700px){.stats,.grid{grid-template-columns:1fr 1fr}header{flex-direction:column;text-align:center}nav button{width:45%}}
+</style>
+</head>
+<body>
+
+<div id="login" class="login">
+<div class="box">
+<h1>🏦 Bank Login</h1>
+<input id="user" placeholder="Username">
+<input id="pass" type="password" placeholder="Password">
+<button class="primary" style="width:100%" onclick="login()">Login</button>
+<p style="text-align:center;margin-top:12px">admin / 1234</p>
+</div>
+</div>
+
+<div id="app" class="hide">
+<header><h1>🏦 Banking Management System</h1><button class="red" onclick="logout()">Logout</button></header>
+<nav>
+<button onclick="show('dash')">Dashboard</button>
+<button onclick="show('accounts')">Accounts</button>
+<button onclick="show('transaction')">Transactions</button>
+<button onclick="show('history')">History</button>
+<button onclick="document.body.classList.toggle('dark')">Dark</button>
+</nav>
+
+<div class="container">
+
+<section id="dash" class="section active">
+<div class="card"><h2>Dashboard</h2>
+<div class="stats">
+<div class="stat blue"><h2 id="ac">0</h2>Accounts</div>
+<div class="stat greenbg"><h2 id="bal">₹0</h2>Total Balance</div>
+<div class="stat orangebg"><h2 id="dep">₹0</h2>Deposits</div>
+<div class="stat redbg"><h2 id="wit">₹0</h2>Withdrawals</div>
+</div></div>
+</section>
+
+<section id="accounts" class="section">
+<div class="card">
+<h2>Create Account</h2>
+<div class="grid">
+<div><input id="name" placeholder="Customer Name"><input id="phone" placeholder="Phone Number"></div>
+<div><input id="email" placeholder="Email"><input id="initial" type="number" placeholder="Initial Deposit"></div>
+</div>
+<button class="primary" onclick="create()">Create Account</button>
+</div>
+<div class="card">
+<h2>Accounts</h2>
+<input id="search" placeholder="Search account..." onkeyup="display()">
+<div class="table"><table><thead><tr><th>Account</th><th>Name</th><th>Phone</th><th>Balance</th><th>Action</th></tr></thead><tbody id="accountsTable"></tbody></table></div>
+</div>
+</section>
+
+<section id="transaction" class="section">
+<div class="card">
+<h2>Bank Transaction</h2>
+<select id="acc"></select>
+<select id="type"><option value="deposit">Deposit</option><option value="withdraw">Withdraw</option></select>
+<input id="amount" type="number" placeholder="Amount">
+<button class="green" onclick="trans()">Submit Transaction</button>
+</div>
+<div class="card">
+<h2>Money Transfer</h2>
+<select id="from"></select>
+<select id="to"></select>
+<input id="transferAmount" type="number" placeholder="Transfer Amount">
+<button class="orange" onclick="transfer()">Transfer Money</button>
+</div>
+</section>
+
+<section id="history" class="section">
+<div class="card">
+<h2>Transaction History</h2>
+<div class="table"><table><thead><tr><th>Date</th><th>Account</th><th>Type</th><th>Amount</th><th>Balance</th></tr></thead><tbody id="historyTable"></tbody></table></div>
+</div>
+</section>
+
+</div>
+</div>
+
+<script>
+let accounts=JSON.parse(localStorage.bankAccounts||"[]");
+let history=JSON.parse(localStorage.bankHistory||"[]");
+
+function save(){
+localStorage.bankAccounts=JSON.stringify(accounts);
+localStorage.bankHistory=JSON.stringify(history);
+}
+
+function login(){
+if(user.value==="admin"&&pass.value==="1234"){
+loginPage();app.classList.remove("hide");
+}else alert("Invalid Login");
+}
+
+function loginPage(){document.getElementById("login").style.display="none"}
+
+function logout(){location.reload()}
+
+function show(id){
+document.querySelectorAll(".section").forEach(x=>x.classList.remove("active"));
+document.getElementById(id).classList.add("active");update();
+}
+
+function create(){
+let n=name.value,p=phone.value,e=email.value,a=+initial.value;
+if(!n||!p||!e||a<0)return alert("Enter valid details");
+let no="AC"+Math.floor(100000+Math.random()*900000);
+accounts.push({no,name:n,phone:p,email:e,balance:a});
+if(a) history.push({date:new Date().toLocaleString(),no,type:"Opening",amount:a,balance:a});
+save();name.value=phone.value=email.value=initial.value="";update();alert("Account Created: "+no);
+}
+
+function trans(){
+let no=acc.value,a=+amount.value,t=type.value,x=accounts.find(x=>x.no===no);
+if(!x||a<=0)return alert("Invalid transaction");
+if(t==="withdraw"&&x.balance<a)return alert("Insufficient balance");
+x.balance+=t==="deposit"?a:-a;
+history.push({date:new Date().toLocaleString(),no,type:t,amount:a,balance:x.balance});
+save();amount.value="";update();alert("Transaction Successful");
+}
+
+function transfer(){
+let f=from.value,t=to.value,a=+transferAmount.value,A=accounts.find(x=>x.no===f),B=accounts.find(x=>x.no===t);
+if(!A||!B||A===B||a<=0)return alert("Invalid transfer");
+if(A.balance<a)return alert("Insufficient balance");
+A.balance-=a;B.balance+=a;
+history.push({date:new Date().toLocaleString(),no:f,type:"Transfer To "+t,amount:a,balance:A.balance});
+history.push({date:new Date().toLocaleString(),no:t,type:"Received From "+f,amount:a,balance:B.balance});
+save();update();transferAmount.value="";alert("Transfer Successful");
+}
+
+function del(no){
+if(confirm("Delete account?")){
+accounts=accounts.filter(x=>x.no!==no);save();update();
+}
+}
+
+function display(){
+let q=(search.value||"").toLowerCase();
+accountsTable.innerHTML=accounts.filter(x=>(x.name+x.no+x.phone).toLowerCase().includes(q)).map(x=>
+`<tr><td>${x.no}</td><td>${x.name}</td><td>${x.phone}</td><td>₹${x.balance.toFixed(2)}</td><td><button class="red" onclick="del('${x.no}')">Delete</button></td></tr>`).join("");
+}
+
+function lists(){
+let o='<option value="">Select Account</option>'+accounts.map(x=>`<option value="${x.no}">${x.no} - ${x.name}</option>`).join("");
+acc.innerHTML=o;from.innerHTML=o;to.innerHTML=o;
+}
+
+function showHistory(){
+historyTable.innerHTML=history.slice().reverse().map(x=>
+`<tr><td>${x.date}</td><td>${x.no}</td><td>${x.type}</td><td>₹${x.amount}</td><td>₹${x.balance}</td></tr>`).join("");
+}
+
+function update(){
+display();lists();showHistory();
+ac.innerText=accounts.length;
+bal.innerText="₹"+accounts.reduce((s,x)=>s+x.balance,0).toFixed(2);
+dep.innerText="₹"+history.filter(x=>x.type==="deposit"||x.type==="Opening").reduce((s,x)=>s+x.amount,0).toFixed(2);
+wit.innerText="₹"+history.filter(x=>x.type==="withdraw").reduce((s,x)=>s+x.amount,0).toFixed(2);
+}
+
+update();
+</script>
+</body>
+</html>
+```
